@@ -1,0 +1,12 @@
+SecondsBetweenRuns = 30
+DdnsGatewayUrl = ""
+
+[[Providers]]
+Name = "digitalocean"
+Domain = ""
+Records = [""]
+
+[[Providers]]
+Name = "cloudflare"
+Domain = ""
+Records = [""]
