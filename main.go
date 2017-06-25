@@ -2,10 +2,11 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"github.com/BurntSushi/toml"
+	"github.com/go-kit/kit/log"
 	"github.com/jasonlvhit/gocron"
 	"github.com/shawntoffel/ddnsgatewayclient"
+	"os"
 )
 
 type Provider struct {
@@ -28,6 +29,7 @@ func ReadConfig(fileName string, config interface{}) error {
 
 var (
 	ConfigFile string
+	Logger     log.Logger
 )
 
 func init() {
@@ -46,14 +48,22 @@ func UpdateDns(client ddnsgatewayclient.DdnsGatewayClient, providers []Provider)
 		updateRequest.Providers = append(updateRequest.Providers, p)
 	}
 
-	_, err := client.UpdateDns(updateRequest)
+	updated, err := client.UpdateDns(updateRequest)
 
 	if err != nil {
-		fmt.Printf(err.Error())
+		Logger.Log("error", err.Error())
+	}
+
+	if updated {
+		Logger.Log("dns has been updated")
 	}
 }
 
 func main() {
+	logger := log.NewJSONLogger(os.Stdout)
+	logContext := log.With(logger, "component", "ddns", "ts", log.DefaultTimestampUTC)
+
+	Logger = logContext
 
 	var config = Config{}
 
