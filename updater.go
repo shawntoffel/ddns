@@ -69,7 +69,9 @@ func (u *Updater) updateProvider(logger zerolog.Logger, p provider.Provider, ip 
 		if err != nil {
 			logger.Error().
 				Err(err).
-				Msg("could not update provider")
+				Str("provider", p.Name()).
+				Str("newIP", ip).
+				Msg("failed to update provider")
 		}
 
 		logger.Info().

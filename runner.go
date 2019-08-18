@@ -27,9 +27,7 @@ func (r *Runner) Start(interval string) {
 	}
 
 	r.cron = cron.New()
-
 	r.cron.AddFunc("@every "+interval, r.run)
-
 	r.cron.Start()
 
 	r.logger.Info().Str("interval", interval).Msg("started")
@@ -58,7 +56,7 @@ func (r *Runner) run() {
 
 	externalIP, hasChanged, err := r.checker.IPHasChanged(r.knownIP)
 	if err != nil {
-		logger.Error().Err(err).Msg("failed to determine if IP has changed")
+		logger.Error().Err(err).Msg("failed to determine if external IP has changed")
 		return
 	}
 
