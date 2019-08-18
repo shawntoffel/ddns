@@ -1,21 +1,19 @@
 package noop
 
-// Noop is a no-op provider
-type Noop struct {
-	records []string
-}
+// Provider is a no-op provider
+type Provider struct{}
 
 // Name returns the provider name
-func (n *Noop) Name() string {
+func (p Provider) Name() string {
 	return "noop"
 }
 
 // SetRecords Set the records this provider is responsible for
-func (n *Noop) SetRecords(records []string) {
-	n.records = records
+func (p Provider) SetRecords(records []string) error {
+	return nil
 }
 
 // Update updates all records with the provided ip
-func (n *Noop) Update(ip string) error {
+func (p Provider) Update(ip string) error {
 	return nil
 }
