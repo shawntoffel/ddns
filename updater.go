@@ -16,7 +16,7 @@ type Updater struct {
 
 //NewUpdater returns a new Updater
 func NewUpdater(logger zerolog.Logger) *Updater {
-	return &Updater{logger: logger, wg: &sync.WaitGroup{}}
+	return &Updater{logger: logger.With().Str("component", "updater").Logger(), wg: &sync.WaitGroup{}}
 }
 
 //RegisterProvider registers a provider to update

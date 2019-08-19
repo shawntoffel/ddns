@@ -14,6 +14,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/shawntoffel/ddns"
 	"github.com/shawntoffel/ddns/provider"
+	"github.com/shawntoffel/ddns/provider/cloudflare"
 	"github.com/shawntoffel/ddns/provider/digitalocean"
 	"github.com/shawntoffel/ddns/provider/noop"
 )
@@ -34,6 +35,7 @@ var (
 	flagEndpoint            = "http://ping.shawntoffel.com:10002/ping"
 	flagNoopRecords         = ""
 	flagDigitalOceanRecords = ""
+	flagCloudflareRecords   = ""
 )
 
 func parseCli() {
@@ -43,6 +45,7 @@ func parseCli() {
 	flag.StringVar(&flagEndpoint, "endpoint", flagEndpoint, "endpoint used to lookup the external IP")
 	flag.StringVar(&flagNoopRecords, "records.noop", flagNoopRecords, "comma delimited list of noop records")
 	flag.StringVar(&flagDigitalOceanRecords, "records.digitalocean", flagDigitalOceanRecords, "comma delimited list of digitalocean records")
+	flag.StringVar(&flagCloudflareRecords, "records.cloudflare", flagCloudflareRecords, "comma delimited list of cloudflare records")
 
 	flag.Parse()
 }
@@ -65,7 +68,7 @@ func main() {
 		Str("version", Version).
 		Logger()
 
-	updater := ddns.NewUpdater(logger.With().Str("component", "updater").Logger())
+	updater := ddns.NewUpdater(logger)
 
 	if flagNoopRecords != "" {
 		domains, err := provider.ParseDomains(strings.Split(flagNoopRecords, ","))
@@ -99,11 +102,40 @@ func main() {
 		updater.RegisterProvider(digitaloceanProvider)
 	}
 
+	if flagCloudflareRecords != "" {
+		apiKey, err := readSecretFromFile(os.Getenv(cloudFlareKeyFile))
+		if err != nil {
+			logger.Error().Err(err).Msg("failed to read cloudflare api key")
+			os.Exit(1)
+		}
+
+		email, err := readSecretFromFile(os.Getenv(cloudFlareEmailFile))
+		if err != nil {
+			logger.Error().Err(err).Msg("failed to read cloudflare email")
+			os.Exit(1)
+		}
+
+		domains, err := provider.ParseDomains(strings.Split(flagCloudflareRecords, ","))
+		if err != nil {
+			logger.Error().Err(err).Msg("failed to parse digital ocean domains")
+			os.Exit(1)
+		}
+
+		cloudflareProvider, err := cloudflare.NewCloudflareProvider(apiKey, email)
+		if err != nil {
+			logger.Error().Err(err).Msg("failed to initialize cloudflare provider")
+			os.Exit(1)
+		}
+
+		cloudflareProvider.SetDomains(domains)
+
+		updater.RegisterProvider(cloudflareProvider)
+	}
+
 	checker := ddns.NewChecker(&http.Client{})
 	checker.SetEndpoint(flagEndpoint)
 
-	runner := ddns.NewRunner(logger.With().Str("component", "runner").Logger(), updater, checker)
-
+	runner := ddns.NewRunner(logger, updater, checker)
 	runner.Start(flagInterval)
 
 	sigChan := make(chan os.Signal)

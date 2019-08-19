@@ -17,7 +17,7 @@ type Runner struct {
 
 //NewRunner returns a new Ddns that checks and updates DNS records at an interval
 func NewRunner(logger zerolog.Logger, updater *Updater, checker *Checker) Runner {
-	return Runner{logger: logger, checker: checker, updater: updater}
+	return Runner{logger: logger.With().Str("component", "runner").Logger(), checker: checker, updater: updater}
 }
 
 //Start starts the runner cron job with the specified interval
