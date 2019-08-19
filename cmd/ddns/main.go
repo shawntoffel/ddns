@@ -24,8 +24,7 @@ var Version = ""
 
 const (
 	digitalOceanTokenFile = "DDNS_DIGITALOCEAN_TOKEN_FILE"
-	cloudFlareKeyFile     = "DDNS_CLOUDFLARE_KEY_FILE"
-	cloudFlareEmailFile   = "DDNS_CLOUDFLARE_EMAIL_FILE"
+	cloudFlareTokenFile   = "DDNS_CLOUDFLARE_TOKEN_FILE"
 )
 
 var (
@@ -103,15 +102,9 @@ func main() {
 	}
 
 	if flagCloudflareRecords != "" {
-		apiKey, err := readSecretFromFile(os.Getenv(cloudFlareKeyFile))
+		apiToken, err := readSecretFromFile(os.Getenv(cloudFlareTokenFile))
 		if err != nil {
 			logger.Error().Err(err).Msg("failed to read cloudflare api key")
-			os.Exit(1)
-		}
-
-		email, err := readSecretFromFile(os.Getenv(cloudFlareEmailFile))
-		if err != nil {
-			logger.Error().Err(err).Msg("failed to read cloudflare email")
 			os.Exit(1)
 		}
 
@@ -121,7 +114,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		cloudflareProvider, err := cloudflare.NewCloudflareProvider(apiKey, email)
+		cloudflareProvider, err := cloudflare.NewCloudflareProvider(apiToken)
 		if err != nil {
 			logger.Error().Err(err).Msg("failed to initialize cloudflare provider")
 			os.Exit(1)

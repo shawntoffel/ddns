@@ -12,8 +12,8 @@ type Provider struct {
 }
 
 // NewCloudflareProvider returns a new Cloudflare Provider
-func NewCloudflareProvider(apiKey, email string) (*Provider, error) {
-	client, err := cloudflare.New(apiKey, email)
+func NewCloudflareProvider(apiToken string) (*Provider, error) {
+	client, err := cloudflare.NewWithAPIToken(apiToken)
 	if err != nil {
 		return &Provider{}, err
 	}

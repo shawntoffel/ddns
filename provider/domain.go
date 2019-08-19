@@ -14,9 +14,7 @@ type Domain struct {
 
 // HasRecord returns true if the provided records is in the domain's slice of records
 func (d Domain) HasRecord(input string) bool {
-	if input == d.Name {
-		input = "@"
-	}
+	input = parseDomainRecord(input, d.Name)
 
 	for _, record := range d.Records {
 		if record == input {
@@ -81,7 +79,7 @@ func parseDomainRecord(record string, domain string) string {
 
 	pos := strings.Index(record, "."+domain)
 	if pos == -1 {
-		return ""
+		return record
 	}
 
 	return record[0:pos]
