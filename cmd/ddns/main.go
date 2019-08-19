@@ -90,7 +90,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		domains, err := provider.ParseDomains(strings.Split(flagNoopRecords, ","))
+		domains, err := provider.ParseDomains(strings.Split(flagDigitalOceanRecords, ","))
 		if err != nil {
 			logger.Error().Err(err).Msg("failed to parse digital ocean domains")
 			os.Exit(1)

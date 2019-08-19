@@ -6,14 +6,14 @@ import "github.com/shawntoffel/ddns/provider"
 type Provider struct{}
 
 // Name returns the provider name
-func (p Provider) Name() string {
+func (p *Provider) Name() string {
 	return "noop"
 }
 
 // SetDomains Set the domains this provider is responsible for
-func (p Provider) SetDomains(domains []provider.Domain) {}
+func (p *Provider) SetDomains(domains []provider.Domain) {}
 
 // Update updates all records with the provided ip
-func (p Provider) Update(ip string) error {
+func (p *Provider) Update(ip string) error {
 	return nil
 }

@@ -15,7 +15,7 @@ type Provider struct {
 }
 
 // NewDigitalOceanProvider returns a new DigitalOcean Provider
-func NewDigitalOceanProvider(apiToken string) Provider {
+func NewDigitalOceanProvider(apiToken string) *Provider {
 	tokenSource := &tokenSource{
 		AccessToken: apiToken,
 	}
@@ -23,21 +23,21 @@ func NewDigitalOceanProvider(apiToken string) Provider {
 	oauthClient := oauth2.NewClient(context.Background(), tokenSource)
 	doClient := godo.NewClient(oauthClient)
 
-	return Provider{client: doClient}
+	return &Provider{client: doClient}
 }
 
 // Name returns the provider name
-func (p Provider) Name() string {
+func (p *Provider) Name() string {
 	return "digitalocean"
 }
 
 // SetDomains sets the domains this provider is responsible for
-func (p Provider) SetDomains(domains []provider.Domain) {
+func (p *Provider) SetDomains(domains []provider.Domain) {
 	p.domains = domains
 }
 
 // Update updates all domain records with the provided ip
-func (p Provider) Update(ip string) error {
+func (p *Provider) Update(ip string) error {
 	for _, domain := range p.domains {
 		doRecords, _, err := p.client.Domains.Records(context.Background(), domain.Name, nil)
 		if err != nil {

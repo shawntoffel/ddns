@@ -12,27 +12,27 @@ type Provider struct {
 }
 
 // NewCloudflareProvider returns a new Cloudflare Provider
-func NewCloudflareProvider(apiKey, email string) (Provider, error) {
+func NewCloudflareProvider(apiKey, email string) (*Provider, error) {
 	client, err := cloudflare.New(apiKey, email)
 	if err != nil {
-		return Provider{}, err
+		return &Provider{}, err
 	}
 
-	return Provider{client: client}, nil
+	return &Provider{client: client}, nil
 }
 
 // Name returns the provider name
-func (p Provider) Name() string {
+func (p *Provider) Name() string {
 	return "cloudflare"
 }
 
 // SetDomains sets the domains this provider is responsible for
-func (p Provider) SetDomains(domains []provider.Domain) {
+func (p *Provider) SetDomains(domains []provider.Domain) {
 	p.domains = domains
 }
 
 // Update updates all records with the provided ip
-func (p Provider) Update(ip string) error {
+func (p *Provider) Update(ip string) error {
 	for _, domain := range p.domains {
 		zoneID, err := p.client.ZoneIDByName(domain.Name)
 		if err != nil {
