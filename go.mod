@@ -3,7 +3,7 @@ module github.com/shawntoffel/ddns
 go 1.12
 
 require (
-	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/cloudflare/cloudflare-go v0.10.0
 	github.com/digitalocean/godo v1.19.0
 	github.com/golang/protobuf v1.3.2 // indirect
 	github.com/kr/pretty v0.1.0 // indirect

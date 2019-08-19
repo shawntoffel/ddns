@@ -13,6 +13,7 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/shawntoffel/ddns"
+	"github.com/shawntoffel/ddns/provider"
 	"github.com/shawntoffel/ddns/provider/digitalocean"
 	"github.com/shawntoffel/ddns/provider/noop"
 )
@@ -67,8 +68,14 @@ func main() {
 	updater := ddns.NewUpdater(logger.With().Str("component", "updater").Logger())
 
 	if flagNoopRecords != "" {
+		domains, err := provider.ParseDomains(strings.Split(flagNoopRecords, ","))
+		if err != nil {
+			logger.Error().Err(err).Msg("failed to parse noop domains")
+			os.Exit(1)
+		}
+
 		noopProvider := &noop.Provider{}
-		noopProvider.SetRecords(strings.Split(flagNoopRecords, ","))
+		noopProvider.SetDomains(domains)
 
 		updater.RegisterProvider(noopProvider)
 	}
@@ -80,12 +87,14 @@ func main() {
 			os.Exit(1)
 		}
 
-		digitaloceanProvider := digitalocean.NewDigitalOceanProvider(apiToken)
-		err = digitaloceanProvider.SetRecords(strings.Split(flagDigitalOceanRecords, ","))
+		domains, err := provider.ParseDomains(strings.Split(flagNoopRecords, ","))
 		if err != nil {
-			logger.Error().Err(err).Msg("failed to set digital ocean records")
+			logger.Error().Err(err).Msg("failed to parse digital ocean domains")
 			os.Exit(1)
 		}
+
+		digitaloceanProvider := digitalocean.NewDigitalOceanProvider(apiToken)
+		digitaloceanProvider.SetDomains(domains)
 
 		updater.RegisterProvider(digitaloceanProvider)
 	}

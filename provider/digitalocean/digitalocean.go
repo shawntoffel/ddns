@@ -2,20 +2,19 @@ package digitalocean
 
 import (
 	"context"
-	"strings"
 
 	"github.com/digitalocean/godo"
-	"golang.org/x/net/publicsuffix"
+	"github.com/shawntoffel/ddns/provider"
 	"golang.org/x/oauth2"
 )
 
 // Provider is a Digital Ocean provider
 type Provider struct {
 	client  *godo.Client
-	domains map[string][]string
+	domains []provider.Domain
 }
 
-// NewDigitalOceanProvider returns a new DigitalOceanProvider
+// NewDigitalOceanProvider returns a new DigitalOcean Provider
 func NewDigitalOceanProvider(apiToken string) Provider {
 	tokenSource := &tokenSource{
 		AccessToken: apiToken,
@@ -24,23 +23,7 @@ func NewDigitalOceanProvider(apiToken string) Provider {
 	oauthClient := oauth2.NewClient(context.Background(), tokenSource)
 	doClient := godo.NewClient(oauthClient)
 
-	return Provider{client: doClient, domains: map[string][]string{}}
-}
-
-// SetRecords Set the records this provider is responsible for
-func (p Provider) SetRecords(records []string) error {
-	for _, record := range records {
-		domain, err := publicsuffix.EffectiveTLDPlusOne(record)
-		if err != nil {
-			return err
-		}
-
-		subdomain := p.parseSubdomain(record, domain)
-
-		p.domains[domain] = append(p.domains[domain], subdomain)
-	}
-
-	return nil
+	return Provider{client: doClient}
 }
 
 // Name returns the provider name
@@ -48,38 +31,30 @@ func (p Provider) Name() string {
 	return "digitalocean"
 }
 
-// Update updates all records with the provided ip
+// SetDomains sets the domains this provider is responsible for
+func (p Provider) SetDomains(domains []provider.Domain) {
+	p.domains = domains
+}
+
+// Update updates all domain records with the provided ip
 func (p Provider) Update(ip string) error {
-	for domain := range p.domains {
-		err := p.updateDomain(domain, ip)
+	for _, domain := range p.domains {
+		doRecords, _, err := p.client.Domains.Records(context.Background(), domain.Name, nil)
 		if err != nil {
 			return err
 		}
-	}
 
-	return nil
-}
+		for _, doRecord := range doRecords {
+			if doRecord.Type != "A" {
+				continue
+			}
 
-func (p Provider) updateDomain(domain string, ip string) error {
-	doRecords, _, err := p.client.Domains.Records(context.Background(), domain, nil)
-	if err != nil {
-		return err
-	}
-
-	subdomains := p.domains[domain]
-
-	for _, doRecord := range doRecords {
-		if doRecord.Type != "A" {
-			continue
-		}
-
-		for _, record := range subdomains {
-			if doRecord.Name == record {
+			if domain.HasRecord(doRecord.Name) {
 				edit := &godo.DomainRecordEditRequest{
 					Data: ip,
 				}
 
-				_, _, err := p.client.Domains.EditRecord(context.Background(), domain, doRecord.ID, edit)
+				_, _, err := p.client.Domains.EditRecord(context.Background(), domain.Name, doRecord.ID, edit)
 				if err != nil {
 					return err
 				}
@@ -88,17 +63,4 @@ func (p Provider) updateDomain(domain string, ip string) error {
 	}
 
 	return nil
-}
-
-func (p Provider) parseSubdomain(record string, domain string) string {
-	if record == domain {
-		return "@"
-	}
-
-	pos := strings.Index(record, "."+domain)
-	if pos == -1 {
-		return ""
-	}
-
-	return record[0:pos]
 }

@@ -1,5 +1,7 @@
 package noop
 
+import "github.com/shawntoffel/ddns/provider"
+
 // Provider is a no-op provider
 type Provider struct{}
 
@@ -8,10 +10,8 @@ func (p Provider) Name() string {
 	return "noop"
 }
 
-// SetRecords Set the records this provider is responsible for
-func (p Provider) SetRecords(records []string) error {
-	return nil
-}
+// SetDomains Set the domains this provider is responsible for
+func (p Provider) SetDomains(domains []provider.Domain) {}
 
 // Update updates all records with the provided ip
 func (p Provider) Update(ip string) error {
