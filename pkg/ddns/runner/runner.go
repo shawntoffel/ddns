@@ -1,22 +1,25 @@
-package ddns
+package runner
 
 import (
 	"github.com/robfig/cron"
 	"github.com/rs/xid"
 	"github.com/rs/zerolog"
+	"github.com/shawntoffel/ddns/pkg/ddns"
 )
+
+var _ ddns.Runner = &Runner{}
 
 // Runner checks and updates DNS records at an interval
 type Runner struct {
 	logger  zerolog.Logger
-	checker *Checker
-	updater *Updater
+	checker ddns.Checker
+	updater ddns.Updater
 	knownIP string
 	cron    *cron.Cron
 }
 
-//NewRunner returns a new Ddns that checks and updates DNS records at an interval
-func NewRunner(logger zerolog.Logger, updater *Updater, checker *Checker) Runner {
+//New returns a new Ddns that checks and updates DNS records at an interval
+func New(logger zerolog.Logger, updater ddns.Updater, checker ddns.Checker) Runner {
 	return Runner{logger: logger.With().Str("component", "runner").Logger(), checker: checker, updater: updater}
 }
 
@@ -34,7 +37,7 @@ func (r *Runner) Start(interval string) {
 }
 
 // Stop gracefully stops
-func (r *Runner) Stop() {
+func (r Runner) Stop() {
 	r.logger.Info().Msg("stopping")
 
 	if r.cron != nil {
@@ -57,6 +60,7 @@ func (r *Runner) run() {
 	externalIP, hasChanged, err := r.checker.IPHasChanged(r.knownIP)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to determine if external IP has changed")
+
 		return
 	}
 

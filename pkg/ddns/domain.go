@@ -1,15 +1,22 @@
-package provider
+package ddns
 
 import (
 	"strings"
 
+	"github.com/rs/zerolog"
 	"golang.org/x/net/publicsuffix"
 )
 
-// Domain contains the domain name and records
 type Domain struct {
-	Name    string
-	Records []string
+	Name     string
+	Records  []string
+	Provider string
+}
+
+func (d Domain) MarshalZerologObject(e *zerolog.Event) {
+	e.Str("domain.Name", d.Name).
+		Str("domain.Records", strings.Join(d.Records, ", ")).
+		Str("domain.Provider", d.Provider)
 }
 
 // HasRecord returns true if the provided records is in the domain's slice of records
@@ -25,8 +32,7 @@ func (d Domain) HasRecord(input string) bool {
 	return false
 }
 
-// ParseDomains parses the provided records into domains with domain records
-func ParseDomains(records []string) ([]Domain, error) {
+func ParseDomains(records []string, provider string) ([]Domain, error) {
 	domainMap, err := createDomainMap(records)
 	if err != nil {
 		return []Domain{}, err
@@ -36,8 +42,9 @@ func ParseDomains(records []string) ([]Domain, error) {
 
 	for name, records := range domainMap {
 		d := Domain{
-			Name:    name,
-			Records: records,
+			Name:     name,
+			Records:  records,
+			Provider: provider,
 		}
 
 		domains = append(domains, d)
