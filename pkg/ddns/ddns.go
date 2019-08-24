@@ -8,7 +8,7 @@ type ProviderRecord struct {
 	Name     string
 	Type     string
 	Content  string
-	Metadata map[string]string
+	Metadata map[string]interface{}
 }
 
 func (r ProviderRecord) MarshalZerologObject(e *zerolog.Event) {
@@ -24,11 +24,6 @@ type Provider interface {
 	Name() string
 	Records(d Domain) ([]ProviderRecord, error)
 	UpdateRecord(record ProviderRecord) error
-}
-
-type ProviderFactory interface {
-	RegisterProvider(provider Provider)
-	Provider(name string) Provider
 }
 
 type Checker interface {

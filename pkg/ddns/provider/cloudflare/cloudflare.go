@@ -7,7 +7,7 @@ import (
 	"github.com/shawntoffel/ddns/pkg/ddns"
 )
 
-var zoneIDMetadataKey = "zoneID"
+var recordMetadataKey = "cloudflareDNSRecord"
 
 // Provider is a Cloudflare provider
 type Provider struct {
@@ -54,7 +54,7 @@ func (p Provider) Records(domain ddns.Domain) ([]ddns.ProviderRecord, error) {
 			Domain:   domain.Name,
 			Type:     cfRecord.Type,
 			Content:  cfRecord.Content,
-			Metadata: map[string]string{zoneIDMetadataKey: zoneID},
+			Metadata: map[string]interface{}{recordMetadataKey: cfRecord},
 		}
 
 		records = append(records, record)
@@ -65,19 +65,14 @@ func (p Provider) Records(domain ddns.Domain) ([]ddns.ProviderRecord, error) {
 
 // UpdateRecord updates the record
 func (p Provider) UpdateRecord(record ddns.ProviderRecord) error {
-	zoneID, ok := record.Metadata[zoneIDMetadataKey]
+	cfRecord, ok := record.Metadata[recordMetadataKey].(cloudflare.DNSRecord)
 	if !ok {
-		return errors.New("record metadata did not contain a zoneID")
-	}
-
-	cfRecord, err := p.client.DNSRecord(zoneID, record.ID)
-	if err != nil {
-		return err
+		return errors.New("metadata did not contain a cloudflare record")
 	}
 
 	cfRecord.Content = record.Content
 
-	err = p.client.UpdateDNSRecord(zoneID, record.ID, cfRecord)
+	err := p.client.UpdateDNSRecord(cfRecord.ZoneID, record.ID, cfRecord)
 	if err != nil {
 		return err
 	}
