@@ -36,7 +36,7 @@ type Checker interface {
 
 //Updater updates providers
 type Updater interface {
-	AddDomains([]Domain)
+	RegisterDomains([]Domain)
 	RegisterProvider(Provider)
 	Update(correlationID string, ip string)
 	Stop()

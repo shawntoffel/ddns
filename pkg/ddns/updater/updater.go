@@ -32,8 +32,8 @@ func (u *Updater) RegisterProvider(provider ddns.Provider) {
 	u.providers[provider.Name()] = provider
 }
 
-// AddDomains adds to the domains which are updated
-func (u *Updater) AddDomains(domains []ddns.Domain) {
+// RegisterDomains registers domains to update
+func (u *Updater) RegisterDomains(domains []ddns.Domain) {
 	if u.domains == nil {
 		u.domains = []ddns.Domain{}
 	}

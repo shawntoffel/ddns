@@ -81,7 +81,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		u.AddDomains(domains)
+		u.RegisterDomains(domains)
 	}
 
 	if flagDigitalOceanRecords != "" {
@@ -100,7 +100,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		u.AddDomains(domains)
+		u.RegisterDomains(domains)
 	}
 
 	if flagCloudflareRecords != "" {
@@ -124,7 +124,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		u.AddDomains(domains)
+		u.RegisterDomains(domains)
 	}
 
 	c := checker.New(&http.Client{})
