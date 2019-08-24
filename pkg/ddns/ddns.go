@@ -2,6 +2,7 @@ package ddns
 
 import "github.com/rs/zerolog"
 
+// ProviderRecord represents a record from a provider
 type ProviderRecord struct {
 	ID       string
 	Domain   string
@@ -11,6 +12,7 @@ type ProviderRecord struct {
 	Metadata map[string]interface{}
 }
 
+// MarshalZerologObject marshals a ProviderRecord for logging
 func (r ProviderRecord) MarshalZerologObject(e *zerolog.Event) {
 	e.Str("record.ID", r.ID).
 		Str("record.Domain", r.Domain).
@@ -26,11 +28,13 @@ type Provider interface {
 	UpdateRecord(record ProviderRecord) error
 }
 
+// Checker checks external IPs
 type Checker interface {
 	SetEndpoint(endpoint string)
 	IPHasChanged(knownIP string) (string, bool, error)
 }
 
+//Updater updates providers
 type Updater interface {
 	AddDomains([]Domain)
 	RegisterProvider(Provider)
@@ -38,6 +42,7 @@ type Updater interface {
 	Stop()
 }
 
+// Runner checks and updates DNS records at an interval
 type Runner interface {
 	Start(interval string)
 	Stop()

@@ -7,12 +7,14 @@ import (
 	"golang.org/x/net/publicsuffix"
 )
 
+// Domain holds domain info
 type Domain struct {
 	Name     string
 	Records  []string
 	Provider string
 }
 
+// MarshalZerologObject marshals a Domain for logging
 func (d Domain) MarshalZerologObject(e *zerolog.Event) {
 	e.Str("domain.Name", d.Name).
 		Str("domain.Records", strings.Join(d.Records, ", ")).
@@ -32,6 +34,7 @@ func (d Domain) HasRecord(input string) bool {
 	return false
 }
 
+// ParseDomains parses a slice of string domains into Domain types
 func ParseDomains(records []string, provider string) ([]Domain, error) {
 	domainMap, err := createDomainMap(records)
 	if err != nil {
