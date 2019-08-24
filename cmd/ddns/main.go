@@ -12,11 +12,13 @@ import (
 	"syscall"
 
 	"github.com/rs/zerolog"
-	"github.com/shawntoffel/ddns"
-	"github.com/shawntoffel/ddns/provider"
-	"github.com/shawntoffel/ddns/provider/cloudflare"
-	"github.com/shawntoffel/ddns/provider/digitalocean"
-	"github.com/shawntoffel/ddns/provider/noop"
+	"github.com/shawntoffel/ddns/pkg/ddns"
+	"github.com/shawntoffel/ddns/pkg/ddns/checker"
+	"github.com/shawntoffel/ddns/pkg/ddns/provider/cloudflare"
+	"github.com/shawntoffel/ddns/pkg/ddns/provider/digitalocean"
+	"github.com/shawntoffel/ddns/pkg/ddns/provider/noop"
+	"github.com/shawntoffel/ddns/pkg/ddns/runner"
+	"github.com/shawntoffel/ddns/pkg/ddns/updater"
 )
 
 // Version of ddns
@@ -67,38 +69,38 @@ func main() {
 		Str("version", Version).
 		Logger()
 
-	updater := ddns.NewUpdater(logger)
+	u := updater.New(logger)
 
 	if flagNoopRecords != "" {
-		domains, err := provider.ParseDomains(strings.Split(flagNoopRecords, ","))
+		provider := &noop.Provider{}
+		u.RegisterProvider(provider)
+
+		domains, err := ddns.ParseDomains(strings.Split(flagNoopRecords, ","), provider.Name())
 		if err != nil {
 			logger.Error().Err(err).Msg("failed to parse noop domains")
 			os.Exit(1)
 		}
 
-		noopProvider := &noop.Provider{}
-		noopProvider.SetDomains(domains)
-
-		updater.RegisterProvider(noopProvider)
+		u.AddDomains(domains)
 	}
 
 	if flagDigitalOceanRecords != "" {
 		apiToken, err := readSecretFromFile(os.Getenv(digitalOceanTokenFile))
 		if err != nil {
-			logger.Error().Err(err).Msg("failed to read digital ocean api token")
+			logger.Error().Err(err).Msg("failed to read digitalocean api token")
 			os.Exit(1)
 		}
 
-		domains, err := provider.ParseDomains(strings.Split(flagDigitalOceanRecords, ","))
+		provider := digitalocean.NewDigitalOceanProvider(apiToken)
+		u.RegisterProvider(&provider)
+
+		domains, err := ddns.ParseDomains(strings.Split(flagDigitalOceanRecords, ","), provider.Name())
 		if err != nil {
-			logger.Error().Err(err).Msg("failed to parse digital ocean domains")
+			logger.Error().Err(err).Msg("failed to parse digitalocean domains")
 			os.Exit(1)
 		}
 
-		digitaloceanProvider := digitalocean.NewDigitalOceanProvider(apiToken)
-		digitaloceanProvider.SetDomains(domains)
-
-		updater.RegisterProvider(digitaloceanProvider)
+		u.AddDomains(domains)
 	}
 
 	if flagCloudflareRecords != "" {
@@ -108,35 +110,35 @@ func main() {
 			os.Exit(1)
 		}
 
-		domains, err := provider.ParseDomains(strings.Split(flagCloudflareRecords, ","))
-		if err != nil {
-			logger.Error().Err(err).Msg("failed to parse digital ocean domains")
-			os.Exit(1)
-		}
-
-		cloudflareProvider, err := cloudflare.NewCloudflareProvider(apiToken)
+		provider, err := cloudflare.NewCloudflareProvider(apiToken)
 		if err != nil {
 			logger.Error().Err(err).Msg("failed to initialize cloudflare provider")
 			os.Exit(1)
 		}
 
-		cloudflareProvider.SetDomains(domains)
+		u.RegisterProvider(&provider)
 
-		updater.RegisterProvider(cloudflareProvider)
+		domains, err := ddns.ParseDomains(strings.Split(flagCloudflareRecords, ","), provider.Name())
+		if err != nil {
+			logger.Error().Err(err).Msg("failed to parse cloudflare domains")
+			os.Exit(1)
+		}
+
+		u.AddDomains(domains)
 	}
 
-	checker := ddns.NewChecker(&http.Client{})
-	checker.SetEndpoint(flagEndpoint)
+	c := checker.New(&http.Client{})
+	c.SetEndpoint(flagEndpoint)
 
-	runner := ddns.NewRunner(logger, updater, checker)
-	runner.Start(flagInterval)
+	r := runner.New(logger, &u, &c)
+	r.Start(flagInterval)
 
 	sigChan := make(chan os.Signal)
 	signal.Notify(sigChan, syscall.SIGINT)
 
 	select {
 	case sig := <-sigChan:
-		runner.Stop()
+		r.Stop()
 		logger.Info().Err(fmt.Errorf("%s", sig)).Msg("stopped")
 	}
 }
