@@ -134,6 +134,7 @@ func main() {
 	r.Start(flagInterval)
 
 	sigChan := make(chan os.Signal)
+	signal.Notify(sigChan, syscall.SIGTERM)
 	signal.Notify(sigChan, syscall.SIGINT)
 
 	select {
