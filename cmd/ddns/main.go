@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"os/signal"
 	"strings"
@@ -33,7 +32,7 @@ var (
 	flagVersion             = false
 	flagDebug               = false
 	flagInterval            = "30s"
-	flagEndpoint            = "http://ping.shawntoffel.com:10002/ping"
+	flagEndpoint            = "https://myip.shawntoffel.com"
 	flagNoopRecords         = ""
 	flagDigitalOceanRecords = ""
 	flagCloudflareRecords   = ""
@@ -127,7 +126,7 @@ func main() {
 		u.RegisterDomains(domains)
 	}
 
-	c := checker.New(&http.Client{})
+	c := checker.New()
 	c.SetEndpoint(flagEndpoint)
 
 	r := runner.New(logger, &u, &c)

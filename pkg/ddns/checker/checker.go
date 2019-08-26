@@ -1,8 +1,12 @@
 package checker
 
 import (
-	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/shawntoffel/ddns/pkg/ddns"
 )
@@ -15,8 +19,13 @@ type Checker struct {
 	endpoint string
 }
 
-// New returns a new Checker
-func New(client *http.Client) Checker {
+// New returns a new Checker with a default client & timeout
+func New() Checker {
+	return Checker{client: &http.Client{Timeout: 5 * time.Second}}
+}
+
+// NewWithClient returns a new Checker with the provided http client
+func NewWithClient(client *http.Client) Checker {
 	return Checker{client: client}
 }
 
@@ -39,24 +48,39 @@ func (c Checker) IPHasChanged(knownIP string) (string, bool, error) {
 	return externalIP, true, nil
 }
 
-type pong struct {
-	Pong string
-}
-
 func (c Checker) lookupExternalIPAddress() (string, error) {
-	resp, err := c.client.Get(c.endpoint)
+	content, err := c.getContentFromEndpoint(c.endpoint)
 	if err != nil {
 		return "", err
+	}
+
+	// Many services have a trailing newline
+	content = strings.TrimSuffix(content, "\n")
+
+	externalIP := net.ParseIP(content)
+	if externalIP == nil {
+		return "", fmt.Errorf("endpoint did not return a valid IP")
+	}
+
+	return externalIP.String(), nil
+}
+
+func (c Checker) getContentFromEndpoint(endpoint string) (string, error) {
+	resp, err := c.client.Get(endpoint)
+	if err != nil {
+		return "", err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("endpoint returned status code: %d", resp.StatusCode)
 	}
 
 	defer resp.Body.Close()
 
-	pong := pong{}
-
-	err = json.NewDecoder(resp.Body).Decode(&pong)
+	bytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
 
-	return pong.Pong, nil
+	return string(bytes), nil
 }
