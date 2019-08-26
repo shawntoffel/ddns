@@ -32,7 +32,7 @@ var (
 	flagVersion             = false
 	flagDebug               = false
 	flagInterval            = "30s"
-	flagEndpoint            = "http://ping.shawntoffel.com:10002/ping"
+	flagEndpoint            = "https://myip.shawntoffel.com"
 	flagNoopRecords         = ""
 	flagDigitalOceanRecords = ""
 	flagCloudflareRecords   = ""
